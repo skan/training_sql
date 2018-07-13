@@ -14,14 +14,43 @@
 	    nom VARCHAR(30),
 	    commentaires TEXT,
 	    PRIMARY KEY (id)
-	)
-	ENGINE=INNODB;
+		)
+		ENGINE=INNODB;
+
+	CREATE TABLE Commande (
+	    numero INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+	    client INT UNSIGNED NOT NULL,
+	    produit VARCHAR(40),
+	    quantite SMALLINT DEFAULT 1,
+	    CONSTRAINT fk_client_numero          -- On donne un nom à notre clé
+	        FOREIGN KEY (client)             -- Colonne sur laquelle on crée la clé
+	        REFERENCES Client(numero)        -- Colonne de référence
+		)
+	ENGINE=InnoDB;                          -- MyISAM interdit, je le rappelle encore une fois !
+
 	SHOW databases;
 	DESCRIBE Animal;
+
 ---	Modify tables
 	ALTER TABLE Test_tuto ADD COLUMN date_insertion DATE NOT NULL;
 	ALTER TABLE Test_tuto CHANGE nom prenom VARCHAR(10) NOT NULL;
 	ALTER TABLE Test_tuto MODIFY id BIGINT NOT NULL AUTO_INCREMENT;
+	ALTER TABLE "table_name" DROP "column_name";
+
+--- create index (UNIQUE |FULLTEXT)
+	CREATE INDEX nom_index
+		ON nom_table (colonne_index [, colonne2_index ...]);  -- Crée un index simple
+	CREATE UNIQUE INDEX nom_index
+		ON nom_table (colonne_index [, colonne2_index ...]);  -- Crée un index UNIQUE
+	CREATE FULLTEXT INDEX ind_full_titre
+		ON Livre (titre);
+	ALTER TABLE nom_table
+		ADD CONSTRAINT [symbole_contrainte] UNIQUE ind_uni_col2 (colonne2);
+--- Create keys 
+	ALTER TABLE Commande
+		ADD CONSTRAINT fk_client_numero 
+			FOREIGN KEY (client) 
+			REFERENCES Client(numero);
 ---	Insert data
 	INSERT INTO Animal VALUES (1, 'chien', 'M', '2010-04-05 13:43:00', 'Rox', 'Mordille beaucoup');
 	INSERT INTO Animal (espece, sexe, date_naissance, nom) 
