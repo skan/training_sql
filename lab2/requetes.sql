@@ -13,3 +13,13 @@ SELECT DATE_FORMAT(date_publication, '%d %M \'%y') AS DATE, pseudo,titre,resume
     INNER JOIN utilisateur ON utilisateur.id = auteur_id 
     WHERE auteur_id = 2
     ORDER BY date_publication ASC;
+ 
+ /* Categorie - id de la catégorie = 3
+Il faut la date de publication (format “12/10/2014 - 17:47”), pseudo de l’auteur, titre et résumé de chaque article (triés du plus récent au plus vieux) de la catégorie 3.'*/
+
+SELECT DATE_FORMAT(date_publication, '%d/%m/%Y - %H:%i') AS DATE, pseudo,titre, resume
+    FROM article
+    INNER JOIN utilisateur ON utilisateur.id = auteur_id 
+    RIGHT JOIN categorie_article ON article.id = categorie_article.article_id
+    WHERE categorie_id = 3
+    ORDER BY date_publication ASC;
