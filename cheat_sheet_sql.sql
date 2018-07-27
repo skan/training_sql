@@ -347,6 +347,14 @@
 			SELECT nom_courant, COUNT(*) FROM Animal INNER JOIN Espece ON Espece.id = Animal.espece_id GROUP BY nom_courant HAVING COUNT(*) > 15; -- for optimisation keep having for groups and where for where
 
 --- DATE & TIME
+	--- summary
+		/*
+		 	for diff: DATEDIFF(), TIMEDIFF(), TIMESTAMPDIFF()
+			INTERVAL(amount, unity)
+			ADDDATE, DATE_ADD
+
+		*/
+
 	--- Date
 		SELECT CURDATE(), CURRENT_DATE(), CURRENT_DATE;
 	--- Time
@@ -404,6 +412,28 @@
 		SELECT DATE_FORMAT(NOW(), 'Nous sommes aujourd''hui le %d %M de l''année %Y. Il est actuellement %l heures et %i minutes.') AS Top_date_longue;
 
 		SELECT DATE_FORMAT(NOW(), '%d %b. %y - %r') AS Top_date_courte;
+
+				--	%d	Jour du mois (nombre à deux chiffres, de 00 à 31)
+				--	%e	Jour du mois (nombre à un ou deux chiffres, de 0 à 31)
+				--	%D	Jour du mois, avec suffixe (1rst, 2nd,…, 31th) en anglais
+				--	%w	Numéro du jour de la semaine (dimanche = 0,…, samedi = 6)
+				--	%W	Nom du jour de la semaine
+				--	%a	Nom du jour de la semaine en abrégé
+				--	%m	Mois (nombre de deux chiffres, de 00 à 12)
+				--	%c	Mois (nombre de un ou deux chiffres, de 0 à 12)
+				--	%M	Nom du mois
+				--	%b	Nom du mois en abrégé
+				--	%y	Année, sur deux chiffres
+				--	%Y	Année, sur quatre chiffres
+				--	%r	Heure complète, format 12h (hh:mm:ss AM/PM)
+				--	%T	Heure complète, format 24h (hh:mm:ss)
+				--	%h	Heure sur deux chiffres et sur 12 heures (de 00 à 12)
+				--	%H	Heure sur deux chiffres et sur 24 heures (de 00 à 23)
+				--	%l	Heure sur un ou deux chiffres et sur 12 heures (de 0 à 12)
+				--	%k	Heure sur un ou deux chiffres et sur 24 heures (de 0 à 23)
+				--	%i	Minutes (de 00 à 59)
+				--	%s ou %S	Secondes (de 00 à 59)
+				--	%p	AM/PM
 
 -- Sur une DATETIME
 SELECT TIME_FORMAT(NOW(), '%r') AS sur_datetime, 
@@ -500,4 +530,4 @@ SELECT STR_TO_DATE('03/04/2011 à 09h17', '%d/%m/%Y à %Hh%i') AS StrDate,
 	
 	SELECT SEC_TO_TIME(102569), TIME_TO_SEC('01:00:30');
 	
-	SELECT LAST_DAY('2012-02-03') AS fevrier2012, LAST_DAY('2100-02-03') AS fevrier2100; 29/02/2012 & 28/12/2100
+	SELECT LAST_DAY('2012-02-03') AS fevrier2012, LAST_DAY('2100-02-03') AS fevrier2100; 29/02/2012 & 28/12/2100 -- denier jour du mois
