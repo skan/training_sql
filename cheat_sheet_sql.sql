@@ -1,7 +1,9 @@
+--- Install my SQL
+
 --- Setup 
 	set PATH=%PATH%;"c:\Program Files\MySQL\MySQL Server 8.0\bin"
 	mysql -u root -p --default-character-set=utf8
---- Create & select database
+--- Create database
 	CREATE DATABASE elevage CHARACTER SET 'utf8';
 	USE elevage 
 	DROP DATABASE elevage 
@@ -87,7 +89,7 @@
 	UPDATE Animal SET sexe='F', nom='Pataude' WHERE id=21;
 --- Search using patterns and jockers	
 	SELECT * FROM Livre WHERE MATCH(auteur) AGAINST ('Terry');
-	SELECT *  FROM Livre WHERE MATCH(titre) AGAINST ('+bonheur* -ogres' IN BOOLEAN MODE);
+	SELECT * FROM Livre WHERE MATCH(titre) AGAINST ('+bonheur* -ogres' IN BOOLEAN MODE);
 --- Jointures
 	SELECT Espece.description 
         FROM Espece 
@@ -178,12 +180,7 @@
     --- sous requêtes for deletion
        	DELETE FROM Animal
 	        WHERE nom = 'Carabistouille' AND espece_id = (SELECT id FROM Espece WHERE nom_courant = 'Chat');
-            --- same as (using join)
-                DELETE Animal   -- Je précise de quelles tables les données doivent être supprimées
-                    FROM Animal     -- Table principale
-                    INNER JOIN Espece ON Animal.espece_id = Espece.id  -- Jointure     
-                    WHERE Animal.nom = 'Carabistouille' AND Espece.nom_courant = 'Chat';
-        --- For update and DELETE we can can't delete tables which is used into the subquery
+        	--- For update and DELETE we can't delete tables which is used into the subquery
 --- UNIONS        
     --- ALL & DISTINCT
 		SELECT * FROM Espece
@@ -250,3 +247,257 @@
         INSERT INTO Animal (sexe, date_naissance, espece_id, nom, mere_id)
 		    VALUES ('M', '2010-05-27 11:38:00', 3, 'Spoutnik', 52) 
             ON DUPLICATE KEY UPDATE mere_id = 52;
+
+--- Operations
+		SELECT nom_courant, prix, 
+	       prix+100 AS addition, prix/2 AS division,
+	       prix-50.5 AS soustraction, prix%3 AS modulo
+		FROM Espece;
+		
+		UPDATE Race  SET prix = prix + 35;
+	
+--- Functions
+	SELECT MIN(date_naissance)     -- On utilise ici une fonction !
+	FROM (
+	    SELECT Animal.id, Animal.sexe, Animal.date_naissance, Animal.nom, Animal.espece_id
+	    FROM Animal
+	    INNER JOIN Espece
+	        ON Espece.id = Animal.espece_id
+	    WHERE Espece.nom_courant IN ('Tortue d''Hermann', 'Perroquet amazone')
+	) AS tortues_perroquets;
+	
+	-- Fonction sans paramètre
+		SELECT PI();    -- renvoie le nombre Pi, avec 5 décimales
+		INSERT INTO Animal (sexe, date_naissance, nom, espece_id, race_id) 
+			VALUES ('M', '2010-11-05', 'Pipo', 1, LAST_INSERT_ID());  -- LAST_INSERT_ID() -- le dernier ID crée par auto-incrémentation , pour la connexion en cours
+
+		SELECT id, nom, espece_id, prix FROM Race;
+		SELECT FOUND_ROWS(); -- nombre de lignes de la dernière requête (ne considère pas LIMIT si on rajoute SQL_CALC_FOUND_ROWS)
+	-- Fonction avec un paramètre
+		SELECT MIN(prix) AS minimum  FROM Espece;
+		SELECT nom, prix, ROUND(prix) FROM Race;
+		
+		SELECT CAST('870303' AS DATE);
+	
+	-- Fonction avec plusieurs paramètres
+		SELECT REPEAT('fort ! Trop ', 4);  -- répète une chaîne (ici : 'fort ! Trop ', répété 4 fois)
+		
+	--- Fonctions scalaires : Sur chaque ligne
+		SELECT CEIL(3.2), CEIL(3.7); -- arrondit au nombre entier supérieur (4 ici). 
+		SELECT FLOOR(3.2), FLOOR(3.7); --  arrondit au nombre entier inférieur (3 ici). 
+		SELECT ROUND(3.22, 1), ROUND(3.55, 1), ROUND(3.77, 1);  -- arrondit au nombre à d (défault, d = 0) décimales le plus proche (3.2; 3.6; 3.8)
+		SELECT TRUNCATE(3.2, 0), TRUNCATE(3.5, 0), TRUNCATE(3.7, 0);--  arrondit en enlévant les décimals ((3;3;3)
+		SELECT POW(2, 5), POWER(5, 2);
+		SELECT SQRT(4);
+		SELECT RAND();
+		SELECT SIGN(-43), SIGN(0), SIGN(37); --- (-1;0;1)
+		SELECT ABS(-43), ABS(0), ABS(37); --- 43;0;3;7
+		SELECT MOD(56, 10); --- 6
+		
+		SELECT BIT_LENGTH('élevage'), CHAR_LENGTH('élevage'), LENGTH('élevage'); -- Les caractères accentués sont codés sur 2 octets en UTF-8  (64,7,8)
+		SELECT STRCMP('texte', 'texte') AS 'texte=texte', 
+			STRCMP('texte','texte2') AS 'texte<texte2', 
+			STRCMP('chaine','texte') AS 'chaine<texte', 
+			STRCMP('texte', 'chaine') AS 'texte>chaine',
+			STRCMP('texte3','texte24') AS 'texte3>texte24'; -- 3 est après 24 dans l'ordre alphabétique  --> 0 ;-1;-1;1;1
+		LPAD(texte, long, caract)
+		RPAD(texte, long, caract) -- retourne une chaine de longeur long ; si texte > long --> raccours; sinon complète avec cartact à gauche ou droit
+		TRIM : supprime les characteres avec ou après le texte
+		SUBSTRING: retourne un partie du texte
+			SELECT SUBSTRING('texte', 2) AS from2,
+					SUBSTRING('texte' FROM 3) AS from3,
+					SUBSTRING('texte', 2, 3) AS from2long3, 
+					SUBSTRING('texte' FROM 3 FOR 1) AS from3long1;
+		
+		SELECT LOWER('AhAh') AS minuscule, 
+				LCASE('AhAh') AS minuscule2, 
+				UPPER('AhAh') AS majuscule,
+				UCASE('AhAh') AS majuscule2;
+		SELECT REVERSE('abcde'); --> edcba
+		INSERT(chaine, pos, long, nouvCaract)
+		REPLACE(chaine, ancCaract, nouvCaract)
+		SELECT CONCAT('My', 'SQL', '!'), 
+			CONCAT_WS('-', 'My', 'SQL', '!'); -- MySQL! ; My-SQL-!
+		FIELD(rech, chaine1, chaine2, chaine3,…) -- retourne l'index ou "rech" est trouve --> 2 si dans chaine 2,
+		SELECT ASCII('T'), CHAR(84), CHAR('84', 84+32, 84.2);
+	-- Fonctions d'aggregation : sur tout une colonne 
+		SELECT COUNT(*) AS nb_chiens FROM Animal  
+			INNER JOIN Espece ON Espece.id = Animal.espece_id WHERE Espece.nom_courant = 'Chien'; -- nbre de chiens
+		SELECT COUNT(DISTINCT race_id) FROM Animal; -- le nombre de races disctinctes
+		SELECT MIN(prix), MAX(prix) FROM Race;
+		SELECT SUM(prix) FROM Espece;
+		SELECT AVG(prix) FROM Espece;
+		SELECT SUM(prix), GROUP_CONCAT(nom_courant) FROM Espece;  --- 1200.00 |Chien,Chat,Tortue d'Hermann,Perroquet amazone,Rat brun	
+		--- Regroupement (faire des sous calculs)
+			SELECT COUNT(*) AS nb_animaux FROM Animal GROUP BY espece_id; --- 10 ; 9 ;4 ;3
+			SELECT espece_id, COUNT(*) AS nb_animaux  FROM Animal GROUP BY espece_id; -- 1:21 ; 2:50;3:15;4:4
+			SELECT nom_courant, sexe, COUNT(*) as nb_animaux
+				FROM Animal
+				INNER JOIN Espece ON Espece.id = Animal.espece_id
+				GROUP BY sexe,nom_courant; --- deux sous groupe, l'ordre est important
+			
+			SELECT nom_courant, sexe, COUNT(*) as nb_animaux FROM Animal  
+				INNER JOIN Espece ON Espece.id = Animal.espece_id  
+				WHERE sexe IS NOT NULL GROUP BY sexe, nom_courant WITH ROLLUP; -- sum ss groupes
+
+			SELECT COALESCE(nom_courant, 'Total'), COUNT(*) as nb_animaux FROM Animal  -- COALESCE: return first not null
+				INNER JOIN Espece ON Espece.id = Animal.espece_id 
+				GROUP BY nom_courant WITH ROLLUP; -- total instean NULL
+			
+			SELECT nom_courant, COUNT(*) FROM Animal INNER JOIN Espece ON Espece.id = Animal.espece_id GROUP BY nom_courant HAVING COUNT(*) > 15; -- for optimisation keep having for groups and where for where
+
+--- DATE & TIME
+	--- Date
+		SELECT CURDATE(), CURRENT_DATE(), CURRENT_DATE;
+	--- Time
+		SELECT CURTIME(), CURRENT_TIME(), CURRENT_TIME;
+		SELECT UNIX_TIMESTAMP();
+	--- Now
+		SELECT NOW(), SYSDATE();
+		SELECT LOCALTIME, CURRENT_TIMESTAMP(), LOCALTIMESTAMP;
+	--- Inserer directemetn dans une talbe
+	
+	-- Usage samples
+		CREATE TABLE testDate (
+			dateActu DATE, 
+			timeActu TIME, 
+			datetimeActu DATETIME
+		);
+		INSERT INTO testDate VALUES (NOW(), NOW(), NOW());
+
+		SELECT nom, date_naissance, DATE(date_naissance) AS uniquementDate
+			FROM Animal
+			WHERE espece_id = 4;
+
+		SELECT nom, DATE(date_naissance) AS date_naiss, 
+				DAY(date_naissance) AS jour, 
+				DAYOFMONTH(date_naissance) AS jour, 
+				DAYOFWEEK(date_naissance) AS jour_sem,
+				WEEKDAY(date_naissance) AS jour_sem2,
+				DAYNAME(date_naissance) AS nom_jour, 
+				DAYOFYEAR(date_naissance) AS jour_annee
+		FROM Animal
+		WHERE espece_id = 4;
+
+		SET lc_time_names = 'fr_FR'; --- to have days' name in french
+
+		SELECT nom, date_naissance, WEEK(date_naissance) AS semaine, WEEKOFYEAR(date_naissance) AS semaine2, YEARWEEK(date_naissance) AS semaine_annee
+			FROM Animal
+			WHERE espece_id = 4;   -- 7 ;  8 ;; 200807
+
+		SELECT nom, date_naissance, 
+			TIME(date_naissance) AS time_complet, 
+			HOUR(date_naissance) AS heure, 
+			MINUTE(date_naissance) AS minutes, 
+			SECOND(date_naissance) AS secondes
+		FROM Animal
+		WHERE espece_id = 4;
+
+		SELECT nom, date_naissance, CONCAT_WS(' ', 'le', DAYNAME(date_naissance), DAY(date_naissance), MONTHNAME(date_naissance), YEAR(date_naissance)) AS jolie_date
+			FROM Animal
+			WHERE espece_id = 4;
+
+		SELECT nom, date_naissance, DATE_FORMAT(date_naissance, 'le %W %e %M %Y') AS jolie_date
+			FROM Animal
+			WHERE espece_id = 4;
+
+		SELECT DATE_FORMAT(NOW(), 'Nous sommes aujourd''hui le %d %M de l''année %Y. Il est actuellement %l heures et %i minutes.') AS Top_date_longue;
+
+		SELECT DATE_FORMAT(NOW(), '%d %b. %y - %r') AS Top_date_courte;
+
+-- Sur une DATETIME
+SELECT TIME_FORMAT(NOW(), '%r') AS sur_datetime, 
+       TIME_FORMAT(CURTIME(), '%r') AS sur_time, 
+       TIME_FORMAT(NOW(), '%M %r') AS mauvais_specificateur, 
+       TIME_FORMAT(CURDATE(), '%r') AS sur_date;
+
+
+-- Format standars
+SELECT DATE_FORMAT(NOW(), GET_FORMAT(DATE, 'EUR')) AS date_eur,
+       DATE_FORMAT(NOW(), GET_FORMAT(TIME, 'JIS')) AS heure_jis,
+       DATE_FORMAT(NOW(), GET_FORMAT(DATETIME, 'USA')) AS date_heure_usa;
+
+-- Date à partir d'une chaine
+SELECT STR_TO_DATE('03/04/2011 à 09h17', '%d/%m/%Y à %Hh%i') AS StrDate,
+       STR_TO_DATE('15blabla', '%Hblabla') StrTime;
+
+--- Diff sur date
+	DATEDIFF : résultat en nombre de jours
+		SELECT DATEDIFF('2011-12-25','2011-11-10') AS nb_jours;    --45
+		SELECT DATEDIFF('2011-12-25 22:12:18','2011-11-10 12:15:41') AS nb_jours;  --45
+		SELECT DATEDIFF('2011-12-25 22:12:18','2011-11-10') AS nb_jours; --4
+	TIMEDIFF
+		Les deux arguments doivent être du meme type (TIME or DATETIME)
+		-- Avec des DATETIME
+		SELECT '2011-10-08 12:35:45' AS datetime1, '2011-10-07 16:00:25' AS datetime2, TIMEDIFF('2011-10-08 12:35:45', '2011-10-07 16:00:25') as difference;
+		
+		-- Avec des TIME
+		SELECT '12:35:45' AS time1, '00:00:25' AS time2, TIMEDIFF('12:35:45', '00:00:25') as difference;
+	TIMESTAMPDIFF (unite, date1, date2)
+		SELECT TIMESTAMPDIFF(DAY, '2011-11-10', '2011-12-25') AS nb_jours,
+		       TIMESTAMPDIFF(HOUR,'2011-11-10', '2011-12-25 22:00:00') AS nb_heures_def, 
+		       TIMESTAMPDIFF(HOUR,'2011-11-10 14:00:00', '2011-12-25 22:00:00') AS nb_heures,
+		       TIMESTAMPDIFF(QUARTER,'2011-11-10 14:00:00', '2012-08-25 22:00:00') AS nb_trimestres;
+	
+-- Ajoute de dates
+	Adddate (date,nombre de jours)
+	Adddate (date, interval qtté unité)
+	SELECT ADDDATE('2011-05-21', INTERVAL 3 MONTH) AS date_interval,  
+	        -- Avec DATE et INTERVAL
+	       ADDDATE('2011-05-21 12:15:56', INTERVAL '3 02:10:32' DAY_SECOND) AS datetime_interval, 
+	        -- Avec DATETIME et INTERVAL
+	       ADDDATE('2011-05-21', 12) AS date_nombre_jours,                                        
+	        -- Avec DATE et nombre de jours
+	       ADDDATE('2011-05-21 12:15:56', 42) AS datetime_nombre_jours;                           
+	        -- Avec DATETIME et nombre de jours
+	
+	DATE_ADD(date, INTERVAL qtté unité)
+	SELECT DATE_ADD('2011-05-21', INTERVAL 3 MONTH) AS avec_date,       
+	        -- Avec DATE
+	       DATE_ADD('2011-05-21 12:15:56', INTERVAL '3 02:10:32' DAY_SECOND) AS avec_datetime;  
+	        -- Avec DATETIME
+	
+	--- Opérateur "+"
+	SELECT '2011-05-21' + INTERVAL 5 DAY AS droite,                    
+	        -- Avec DATE et intervalle à droite
+	       INTERVAL '3 12' DAY_HOUR + '2011-05-21 12:15:56' AS gauche; 
+	        -- Avec DATETIME et intervalle à gauche
+	
+
+	TIMESTAMPADD(unite, quantite, date)
+		SELECT TIMESTAMPADD(DAY, 5, '2011-05-21') AS avec_date,            
+		        -- Avec DATE
+		       TIMESTAMPADD(MINUTE, 34, '2011-05-21 12:15:56') AS avec_datetime;  
+		        -- Avec DATETIME
+		
+-- Ajoute time
+	SELECT NOW() AS Maintenant, ADDTIME(NOW(), '01:00:00') AS DansUneHeure,  
+	        -- Avec un DATETIME
+	       CURRENT_TIME() AS HeureCourante, ADDTIME(CURRENT_TIME(), '03:20:02') AS PlusTard; 
+	        -- Avec un TIME
+
+-- Soustraction d'une intervalle de temps
+	SELECT SUBDATE('2011-05-21 12:15:56', INTERVAL '3 02:10:32' DAY_SECOND) AS SUBDATE1, 
+	       SUBDATE('2011-05-21', 12) AS SUBDATE2,
+	       DATE_SUB('2011-05-21', INTERVAL 3 MONTH) AS DATE_SUB;
+	
+	SELECT SUBTIME('2011-05-21 12:15:56', '18:35:15') AS SUBTIME1,
+	       SUBTIME('12:15:56', '8:35:15') AS SUBTIME2;
+
+-- Operateur "-"
+	SELECT '2011-05-21' - INTERVAL 5 DAY;
+	
+	INTERVAL peut être définit avec une qtté négative
+	SELECT ADDDATE(NOW(), INTERVAL -3 MONTH) AS ajout_negatif, SUBDATE(NOW(), INTERVAL 3 MONTH) AS retrait_positif;
+	SELECT DATE_ADD(NOW(), INTERVAL 4 HOUR) AS ajout_positif, DATE_SUB(NOW(), INTERVAL - 4 HOUR) AS retrait_negatif;
+	SELECT NOW() + INTERVAL -15 MINUTE AS ajout_negatif, NOW() - INTERVAL 15 MINUTE AS retrait_positif;
+	
+	SELECT FROM_UNIXTIME(1325595287);
+	SELECT UNIX_TIMESTAMP('2012-01-03 13:54:47');
+	
+	
+	SELECT MAKEDATE(2012, 60) AS 60eJour2012, MAKETIME(3, 45, 34) AS heureCree;
+	
+	SELECT SEC_TO_TIME(102569), TIME_TO_SEC('01:00:30');
+	
+	SELECT LAST_DAY('2012-02-03') AS fevrier2012, LAST_DAY('2100-02-03') AS fevrier2100; 29/02/2012 & 28/12/2100
